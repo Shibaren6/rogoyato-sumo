@@ -1,21 +1,24 @@
-const int ena 2; // Sağ Motor Hız 
-const int enb 3; // Sol Motor Hız
-const int ina 4; // Sağ Motor 1 
-const int inb 5; // Sağ Motor 2
-const int inc 6; // Sol Motor 1
-const int ind 7; // Sol Motor 2
-const int sagSensor 8; // Sol Sensör
-const int solSensor 9; // Sağ Sensör
-const int uzaklikSensor 10; // Uzaklık Sensörü
 #define kizil_ileri A1
 #define kizil_sag A2
 #define kizil_sol A3
 #define kizil_geri A4
 
+const int ena = 2; // Sağ Motor Hız 
+const int enb = 3; // Sol Motor Hız
+const int ina = 4; // Sağ Motor 1 
+const int inb = 5; // Sağ Motor 2
+const int inc = 6; // Sol Motor 1
+const int ind = 7; // Sol Motor 2
+const int sagSensor = 8; // Sol Sensör
+const int solSensor = 9; // Sağ Sensör
+const int uzaklikSensor = 10; // Uzaklık Sensörü
+
 const int aci = 2;
 const int max_uzaklik = 77;
 const int minimumMesafe = 2;
 const float HizSureKatsayi = 3.0;
+
+bool sensorConnected = false;
 
 int yon;
 bool orta;
@@ -30,6 +33,8 @@ int dist;
 
 int iena=1;
 int gena=1;
+int saena=0;
+int soena=0;
 
 bool durmak=1;
 bool ilerlemek=0;
@@ -40,6 +45,8 @@ bool sagda;
 bool solda;
 bool dibinde;
 bool ortada;
+
+bool problem;
 
 int bizyon=1;
 
@@ -68,7 +75,7 @@ void setup() { //// SETUUUPP!!!
   lastTime = millis();
 
   delay(10);
-  sensor.setTimeout(500);
+  // sensor.setTimeout(500); // sensor diye bir şey yok
 
   if (!mes.init()) {
     Serial.println("VL53L1X sensörü başlatılamadı!");
@@ -77,10 +84,10 @@ void setup() { //// SETUUUPP!!!
   mes.setDistanceMode(VL53L1X::Long);
   mes.setMeasurementTimingBudget(50000); // 50 ms (maks. hassasiyet)
   mes.startContinuous(50); // 50 ms'de bir okuma
-  mes2=mes.read()/10;
+  //mes2=mes.read()/10; // tekrar setup yazılsın
 }
 
-void loop() { /
+void loop() { 
   switch(state){
     case 0:
       basla();
@@ -118,18 +125,18 @@ void ara(){
       bulundu = true;
     }
     else if(sag){
-      sag(1);
+      sagGit(1);
     }
     else if(sol){
-      sol(1);
+      solGit(1);
     }
     else{
       switch(rakip_yon){
         case false:
-          sag(1);
+          sagGit(1);
           break;
         case true:
-          sol(1);
+          solGit(1);
           break;
       }
     }
@@ -172,7 +179,7 @@ void geriCekil(){
 void ileri(int x){
   while(x > 0){
     sensorOku();
-    if(kizil_ileri || kizil_geri || kizil_sag || kizil_sol){
+    if(iena || gena || saena || soena){
       dur();
       break;
     }
@@ -188,10 +195,10 @@ void ileri(int x){
   }
 }
 
-void geri(){
+void geri(int x){
   while(x > 0){
     sensorOku();
-    if(kizil_ileri || kizil_geri || kizil_sag || kizil_sol){
+    if(iena || gena || saena || soena){
       dur();
       break;
     }
@@ -212,11 +219,11 @@ int aciSureHesaplayici(int x){
 }
 
 // x Derece Açı Cinsinden Açı Olacak
-void sag(int x){
+void sagGit(int x){
   int t = aciSureHesaplayici(x);
   while(t > 0){
     sensorOku();
-    if(kizil_ileri || kizil_geri || kizil_sag || kizil_sol){
+    if(iena || gena || saena || soena){
       dur();
       break;
     }
@@ -232,11 +239,11 @@ void sag(int x){
   }
 }
 
-void sol(int x){
+void solGit(int x){
   int t = aciSureHesaplayici(x);
   while(t > 0){
     sensorOku();
-    if(kizil_ileri || kizil_geri || kizil_sag || kizil_sol){
+    if(iena || gena || saena || soena){
       dur();
       break;
     }
@@ -253,7 +260,7 @@ void sol(int x){
 }
 
 void dur(){
-  mpu();
+  mpuOku();
   switch(yon){
     case 1:
       geri(velocityY * 5); // Statik Ayarlama, Burası Değiştirlecek 
@@ -275,7 +282,7 @@ void dur(){
 }
 
 // Sensör Okuma Kodları
-void kiziilKontrol(){
+void kizilKontrol(){
   iena=(kizil_ileri>1000) ? 0 : 1;
   gena=(kizil_geri>1000) ? 0 : 1;
   saena=(kizil_sag>1000) ? 0 : 1;
@@ -284,7 +291,7 @@ void kiziilKontrol(){
 
 void sagKontrol(){
   sag = digitalRead(sagSensor) == 0 ? 0 : 1;
-  rakip_yon = sag == 1 ? false : rakip_yon;
+  rakip_yon = sagGit == 1 ? false : rakip_yon;
 }
 
 void solKontrol(){
@@ -298,13 +305,16 @@ void uzaklikBak(){
 }
 
 void sensorOku(){
+  kizilKontrol();
   sagKontrol();
   solKontrol();
-  analogRead();
+  uzaklikBak();
 }
 // Sensör Okuma Kodları
 
-void mpu(){
+int previousVelocityX = 0;
+
+void mpuOku(){
   if (!mpu.testConnection()) {
     sensorConnected = false;
     Serial.println("MPU bağlantı kaybedildi. Yeniden bağlanmayı deniyor...");
@@ -337,7 +347,8 @@ void mpu(){
   if (abs(accelX) < 0.1) velocityX = 0;
   if (abs(accelY) < 0.1) velocityY = 0;
 
-  float diff = abs(velocityX - previousVelocityX);
+  float fark = velocityX - previousVelocityX;
+  float diff = fark > 0 ? fark : -1*fark;
 
   if (diff > 0.03) {
     problem = true;
@@ -359,6 +370,8 @@ bool initializeMPU() {
     return false;
   }
 }
+
+int lastReconnectAttempt = 0;
 
 void reconnectMPU() {
   unsigned long now = millis();
