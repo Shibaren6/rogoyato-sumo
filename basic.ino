@@ -1,9 +1,17 @@
 /*
-//      1- The code uses while loops with decrementing counters for timing, which is not ideal. 
+//      1- The code uses while loops with decrementing counters for timing,
+// which is not ideal. 
 // This approach will block the main loop execution.
 // Better to use millis() for non-blocking timing.
+Blocking Movement Functions:
+
+The movement functions (ileri, geri, sagGit, solGit) still use blocking while loops
+These should be converted to non-blocking implementations using millis()
+
+
 //      2- Velocity Calculation Issues:
 // The MPU6050 integration is simple and may drift over time without proper filtering.
+// Consider adding a complementary filter or Kalman filter for better sensor fusion
 //           - Claude 3.7 Sonnet          
 
 // hedefSure = x;
@@ -330,10 +338,10 @@ void dur(){
 
 // Sensör Okuma Kodları
 void kizilKontrol(){
-  iena=(analogRead(kizil_ileri>1000)) ? 0 : 1;
-  gena=(analogRead(kizil_geri>1000)) ? 0 : 1;
-  saena=(analogRead(kizil_sag>1000)) ? 0 : 1;
-  soena=(analogRead(kizil_sol>1000)) ? 0: 1;
+  iena=(analogRead(kizil_ileri)>1000) ? 0 : 1;
+  gena=(analogRead(kizil_geri)>1000) ? 0 : 1;
+  saena=(analogRead(kizil_sag)>1000) ? 0 : 1;
+  soena=(analogRead(kizil_sol)>1000) ? 0: 1;
 }
 
 void sagKontrol(){
