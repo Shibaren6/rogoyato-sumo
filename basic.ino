@@ -1,4 +1,4 @@
-/*
+/*------------------------------------------------------------------------------------
 //      1- The code uses while loops with decrementing counters for timing,
 // which is not ideal. 
 // This approach will block the main loop execution.
@@ -8,12 +8,17 @@ Blocking Movement Functions:
 The movement functions (ileri, geri, sagGit, solGit) still use blocking while loops
 These should be converted to non-blocking implementations using millis()
 
+Hareket fonksiyonlarında  while döngüleri kullanılıyor ve
+bu, loop() fonksiyonunun akışını engelliyor. 
+Bu nedenle robot başka şeylerle ilgilenemiyor 
+(örneğin sensörleri düzenli okuyamıyor veya durum geçişlerini anlık yakalayamıyor).
 
+--------------------------------------------------------------------------------------
 //      2- Velocity Calculation Issues:
 // The MPU6050 integration is simple and may drift over time without proper filtering.
 // Consider adding a complementary filter or Kalman filter for better sensor fusion
 //           - Claude 3.7 Sonnet          
-
+--------------------------------------------------------------------------------------
 // hedefSure = x;
 // unsigned long startTime = millis();
 // while (millis() - startTime < hedefSure) {
@@ -24,7 +29,8 @@ These should be converted to non-blocking implementations using millis()
 //     break;
 //   }
 // }
-// şeklinde bir kod yazılabilir*/
+// şeklinde bir kod yazılabilir
+--------------------------------------------------------------------------------------*/
 
 #define kizil_ileri A1
 #define kizil_sag A2
