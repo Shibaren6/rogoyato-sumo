@@ -1,3 +1,23 @@
+/*
+//      1- The code uses while loops with decrementing counters for timing, which is not ideal. 
+// This approach will block the main loop execution.
+// Better to use millis() for non-blocking timing.
+//      2- Velocity Calculation Issues:
+// The MPU6050 integration is simple and may drift over time without proper filtering.
+//           - Claude 3.7 Sonnet          
+
+// hedefSure = x;
+// unsigned long startTime = millis();
+// while (millis() - startTime < hedefSure) {
+//   // Motor control code
+//   sensorOku();
+//   if (iena || gena || saena || soena) {
+//     dur();
+//     break;
+//   }
+// }
+// şeklinde bir kod yazılabilir*/
+
 #define kizil_ileri A1
 #define kizil_sag A2
 #define kizil_sol A3
@@ -74,6 +94,14 @@ void setup() { //// SETUUUPP!!!
 
   lastTime = millis();
 
+  pinMode(ena, OUTPUT);
+  pinMode(enb, OUTPUT);
+  pinMode(ina, OUTPUT);
+  pinMode(inb, OUTPUT);
+  pinMode(inc, OUTPUT);
+  pinMode(ind, OUTPUT);
+  // continue setting up the pins
+
   delay(10);
   // sensor.setTimeout(500); // sensor diye bir şey yok
 
@@ -113,6 +141,7 @@ void loop() {
 
 void basla(){
   delay(1500); // 1,5 Saniye Bekle
+  state = 1; // Ara Moduna Geç
 }
 
 void ara(){
@@ -157,6 +186,12 @@ void saldir(){
         state = 3;
         break;
       }
+      t--;
+      if(iena || gena || saena || soena){
+        dur();
+        state = 3;
+        break;
+      }
     } 
   }
   else{
@@ -165,8 +200,17 @@ void saldir(){
   }
 }
 
-void geriCekil(){
+/*void geriCekil(){
   geri(500); // Yarım Saniye, Daha Sonra Değiştirilecek
+  state = 1;
+}*/ //eski geri çekilme kodu, yeni kodu aşağıda
+void geriCekil() {
+  unsigned long start = millis();
+  while (millis() - start < 500) {
+    sensorOku();
+    if (gena) break; // Stop if back sensor detects edge
+    geri(1);
+  }
   state = 1;
 }
 
@@ -218,7 +262,7 @@ int aciSureHesaplayici(int x){
   return x * aci;
 }
 
-// x Derece Açı Cinsinden Açı Olacak
+// x Derece Cinsinden Açı Olacak
 void sagGit(int x){
   int t = aciSureHesaplayici(x);
   while(t > 0){
@@ -235,7 +279,7 @@ void sagGit(int x){
 
     digitalWrite(inc, 1);
     digitalWrite(ind, 0);
-    x--;
+    t--;
   }
 }
 
@@ -255,7 +299,7 @@ void solGit(int x){
 
     digitalWrite(inc, 0);
     digitalWrite(ind, 1);
-    x--;
+    t--;
   }
 }
 
@@ -269,6 +313,8 @@ void dur(){
       ileri(velocityY * 5); // Statik Ayarlama, Burası Değiştirlecek 
       break;
     default:
+      velocityX = 0;
+      velocityY = 0;
       digitalWrite(ena, 0);
       digitalWrite(enb, 0);
 
@@ -277,21 +323,22 @@ void dur(){
 
       digitalWrite(inc, 0);
       digitalWrite(ind, 0);
+
       break;
   }
 }
 
 // Sensör Okuma Kodları
 void kizilKontrol(){
-  iena=(kizil_ileri>1000) ? 0 : 1;
-  gena=(kizil_geri>1000) ? 0 : 1;
-  saena=(kizil_sag>1000) ? 0 : 1;
-  soena=(kizil_sol>1000) ? 0: 1;
+  iena=(analogRead(kizil_ileri>1000)) ? 0 : 1;
+  gena=(analogRead(kizil_geri>1000)) ? 0 : 1;
+  saena=(analogRead(kizil_sag>1000)) ? 0 : 1;
+  soena=(analogRead(kizil_sol>1000)) ? 0: 1;
 }
 
 void sagKontrol(){
   sag = digitalRead(sagSensor) == 0 ? 0 : 1;
-  rakip_yon = sagGit == 1 ? false : rakip_yon;
+  rakip_yon = sag == 1 ? false : rakip_yon;
 }
 
 void solKontrol(){
@@ -300,8 +347,12 @@ void solKontrol(){
 }
 
 // Uzaklık Hesaplayıcı Maksimum Sınır Ötesinde Ne Döner? Ona Göre Tekrar Elden Geçir
-void uzaklikBak(){
-  dist = analogRead(uzaklikSensor) > max_uzaklik ? max_uzaklik : analogRead(uzaklikSensor);
+// void uzaklikBak(){
+//   dist = analogRead(uzaklikSensor) > max_uzaklik ? max_uzaklik : analogRead(uzaklikSensor);
+// } // eski uzaklık kodu, yeni kodu aşağıda
+void uzaklikBak() {
+  dist = mes.read();
+  if (dist > max_uzaklik) dist = max_uzaklik;
 }
 
 void sensorOku(){
