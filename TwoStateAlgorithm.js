@@ -1,7 +1,17 @@
 var state = "search";
+var search_speed = 15;
+var straight_speed = 30;
+var turn_speed = 25;
+
+var iterations = 0;
+var find_iteration = -1;
+var transition = 50;
+
+var last_known_enemy_direction = "";
+var search_rotation_direction = "right";
 
 function control(inputs) {
-    
+    iterations++;
     var distance_right = inputs["distance-right"];
     var distance_middle = inputs["distance-middle"];
     var distance_left  = inputs["distance-left"];
@@ -13,23 +23,29 @@ function control(inputs) {
     
     var left_speed, right_speed;
     
-    var speed = 30;
+    var speed = search_speed;
     
-
     if (front_left > 0.25 || front_right > 0.25 || back_left > 0.25 || back_right > 0.25) {
         state  = "search";
     }
+    
 
     switch (state) {
         case "search":
-            speed = 30;
+            speed = search_speed;
             if (distance_middle < 300) {
-                state = "straight";
+                if (find_iteration == -1) {
+                    find_iteration = iterations;
+                }
+                else if (find_iteration - iterations < transition) {
+                    find_iteration = -1;
+                    state = "attack";
+                }
             }
             break;
-        case "straight":
-            speed = 30;
-            if (distance_middle == 300 && distance_left == 300 && distance_right == 300) {
+        case "attack":
+            speed = straight_speed;
+            if (distance_middle >= 300 && distance_left >= 300 && distance_right >= 300) {
                 state = "search";
             }
             break;
@@ -37,12 +53,45 @@ function control(inputs) {
 
     switch (state) {
         case "search":
-            left_speed  =  speed;
-            right_speed =  -speed;
+            switch (last_known_enemy_direction) {
+                default: 
+                case "left":
+                    left_speed  = -speed;
+                    right_speed = speed;
+                    break;
+                case "right":
+                    left_speed  = speed;
+                    right_speed = -speed;
+                    break;
+            }
             break;
-        case "straight":
-            left_speed  =   speed;
-            right_speed =  speed;
+        case "attack":
+            
+            if (distance_middle < 300 || (distance_right < 300 && distance_left < 300)) {
+                left_speed  = speed;
+                right_speed = speed;
+                
+                last_known_enemy_direction = "forward"; //
+                console.log(last_known_enemy_direction)
+            }
+            if (distance_right < 300) {
+                left_speed  = turn_speed;
+                right_speed = speed;
+                
+                last_known_enemy_direction = "right";
+            }
+            else if (distance_left < 300) {
+                left_speed  = speed;
+                right_speed = turn_speed;
+                
+                last_known_enemy_direction = "left";
+            }
+            else {
+                left_speed  = speed;
+                right_speed = speed;
+                
+                last_known_enemy_direction = "";
+            }
             break;
     }
 
