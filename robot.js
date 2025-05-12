@@ -50,19 +50,19 @@ function robot() {
                 "type": "distance",
                 "id": "distance-left",
                 "position": [-5.5, 2.75, 5.5],
-                "euler": [ -7, 0, 0, "XYZ" ]
-            },
-            {
-                "type": "distance",
-                "id": "distance-middle",
-                "position": [0, 2.75, 5.5],
-                "euler": [ 0.05, 0, 0, "XYZ" ]
+                "euler": [ 0.05, 0, 0.3, "XYZ" ]
             },
             {
                 "type": "distance",
                 "id": "distance-right",
                 "position": [ 5.5, 2.75, 5.5],
-                "euler": [ 7, 0, 0, "XYZ" ]
+                "euler": [ 0.05, 0, -0.3, "XYZ" ]
+            },
+            {
+                "type": "distance",
+                "id": "distance-middle",
+                "position": [ 0, 2.75, 5.5],
+                "euler": [ 0.05, 0, 0, "XYZ" ]
             },
             {
                 "type": "ground",
@@ -73,16 +73,6 @@ function robot() {
                 "type": "ground",
                 "id": "front-right",
                 "position": [  7, 6, 0.85]
-            },
-            {
-                "type": "ground",
-                "id": "back-left",
-                "position": [ -7, -6, 0.85]
-            },
-            {
-                "type": "ground",
-                "id": "back-right",
-                "position": [  7, -6, 0.85]
             }
         ]
     };
