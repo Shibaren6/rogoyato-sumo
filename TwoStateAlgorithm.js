@@ -37,7 +37,7 @@ function control(inputs) {
                 if (find_iteration == -1) {
                     find_iteration = iterations;
                 }
-                else if (find_iteration - iterations < transition) {
+                else if (iterations - find_iteration < transition) {
                     find_iteration = -1;
                     state = "attack";
                 }
